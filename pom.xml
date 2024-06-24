@@ -114,6 +114,9 @@
     <src.dir>src/main/java</src.dir>
     <test.additional.args />
 
+    <!-- Jacoco-->
+    <sonar.coverage.jacoco.xmlReportPaths>../tests/target/site/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+
     <!-- dependencies -->
     <arquillian-cube.version>1.18.2</arquillian-cube.version>
     <arquillian-junit.version>1.8.0.Final</arquillian-junit.version>
@@ -155,7 +158,7 @@
     <lombok.version>1.18.32</lombok.version>
     <log4j.version>2.23.1</log4j.version>
     <lz4.version>1.3.0</lz4.version>
-    <mockito.version>4.11.0</mockito.version>
+    <mockito.version>3.3.3</mockito.version>
     <netty.version>4.1.111.Final</netty.version>
     <netty-iouring.version>0.0.25.Final</netty-iouring.version>
     <prometheus.version>0.15.0</prometheus.version>
@@ -204,6 +207,9 @@
     <otel.version>1.26.0</otel.version>
     <UBUNTU_MIRROR>http://archive.ubuntu.com/ubuntu/</UBUNTU_MIRROR>
     <UBUNTU_SECURITY_MIRROR>http://security.ubuntu.com/ubuntu/</UBUNTU_SECURITY_MIRROR>
+
+    <sonar-maven-plugin.version> 3.10.0.2594</sonar-maven-plugin.version>
+    <jacoco-maven-plugin.version>0.8.4</jacoco-maven-plugin.version>
   </properties>
 
   <!-- dependency definitions -->
@@ -835,13 +841,11 @@
       <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
-   <!-->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
       <scope>test</scope>
     </dependency>
-    <-->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
@@ -918,12 +922,12 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>${maven-surefire-plugin.version}</version>
+          <version>$3.2.5</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
-          <version>${maven-surefire-plugin.version}</version>
+          <version>$3.2.5</version>
         </plugin>
         <plugin>
           <groupId>com.github.maven-nar</groupId>
@@ -1355,6 +1359,23 @@
                 <release>${maven.compiler.release}</release>
               </configuration>
             </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <version>$3.2.5</version>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-failsafe-plugin</artifactId>
+              <version>$3.2.5</version>
+            </plugin>
+
+            <!-- JaCoCo plugin -->
+            <plugin>
+              <groupId>org.jacoco</groupId>
+              <artifactId>jacoco-maven-plugin</artifactId>
+              <version>0.8.11</version>
+            </plugin>
           </plugins>
         </pluginManagement>
       </build>
@@ -1403,5 +1424,49 @@
         <UBUNTU_SECURITY_MIRROR>${env.UBUNTU_SECURITY_MIRROR}</UBUNTU_SECURITY_MIRROR>
       </properties>
     </profile>
+
+    <!-- Jacoco Profile-->
+    <profile>
+      <id> Jacoco</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+        <property>
+          <name>!skipJaCoCoCoverage</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <configuration>
+              <excludes>
+                <exclude>jdk.internal.reflect.*</exclude>
+              </excludes>
+            </configuration>
+            <executions>
+              <execution>
+                <id>prepare-agent</id>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>report</id>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+                <configuration>
+                  <formats>
+                    <format>HTML</format>
+                  </formats>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
   </profiles>
 </project>
