@@ -117,6 +117,10 @@
     <!-- Jacoco-->
     <sonar.coverage.jacoco.xmlReportPaths>../tests/target/site/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
+    <!-- Sonar cloud -->
+    <sonar.organization>gboc09</sonar.organization>
+    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+
     <!-- dependencies -->
     <arquillian-cube.version>1.18.2</arquillian-cube.version>
     <arquillian-junit.version>1.8.0.Final</arquillian-junit.version>
