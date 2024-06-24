@@ -922,12 +922,12 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>$3.2.5</version>
+          <version>${maven-surefire-plugin.version}</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
-          <version>$3.2.5</version>
+          <version>${maven-surefire-plugin.version}</version>
         </plugin>
         <plugin>
           <groupId>com.github.maven-nar</groupId>
@@ -977,21 +977,18 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <!-->
-        <configuration>
-          <argLine>-Xmx2G -Djava.net.preferIPv4Stack=true -Dio.netty.leakDetection.level=paranoid ${test.additional.args}</argLine>
-          <redirectTestOutputToFile>${redirectTestOutputToFile}</redirectTestOutputToFile>
-          <forkCount>${forkCount.variable}</forkCount>
-          <reuseForks>false</reuseForks>
-          <trimStackTrace>false</trimStackTrace>
-          <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
-          <rerunFailingTestsCount>${testRetryCount}</rerunFailingTestsCount>
-        </configuration>
-        <-->
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -1358,16 +1355,6 @@
                 <!-- for some reason, setting maven.compiler.release property alone doesn't work -->
                 <release>${maven.compiler.release}</release>
               </configuration>
-            </plugin>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-surefire-plugin</artifactId>
-              <version>$3.2.5</version>
-            </plugin>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-failsafe-plugin</artifactId>
-              <version>$3.2.5</version>
             </plugin>
 
             <!-- JaCoCo plugin -->
