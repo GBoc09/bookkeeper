@@ -202,7 +202,7 @@ public class FileInfoTest {
      * non venga generata alcuna eccezione.
      *
      * FC_NULL or SAME:
-     * il test veriifca se il file è stato eliminato.
+     * il test verifica se il file è stato eliminato.
      * */
     @Test
     public void testFileInfo() throws IOException {

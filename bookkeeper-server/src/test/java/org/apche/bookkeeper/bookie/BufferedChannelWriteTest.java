@@ -243,22 +243,22 @@ public class BufferedChannelWriteTest {
             if (this.srcSize < this.capacity) {
                 expectedNumByteInWriteBuff = this.srcSize;
             } else {
-                expectedNumByteInWriteBuff = this.srcSize % this.capacity;
+                expectedNumByteInWriteBuff = this.srcSize % this.capacity; // at least capacity bytes can be written in the buffer
                 System.out.println("expectedNumByteInWriteBuff: " + expectedNumByteInWriteBuff);
             }
         }
 
         int expectedNumByteInFileChannel = 0;
-        if (this.unpersistedBytes > 0L) {
+        if (this.unpersistedBytes > 0L) { // only if we cross the threshold we can write directly in the FC
             if (this.unpersistedBytes <= this.srcSize) {
                 expectedNumByteInFileChannel = this.srcSize;
                 expectedNumByteInWriteBuff = 0;
             }
-        } else {
+        } else { // we are under the threshold
             if (this.srcSize < this.capacity) {
-                expectedNumByteInFileChannel = 0;
+                expectedNumByteInFileChannel = 0; // we write only in the write buffer
             } else {
-                expectedNumByteInFileChannel = this.srcSize - expectedNumByteInWriteBuff;
+                expectedNumByteInFileChannel = this.srcSize - expectedNumByteInWriteBuff; // only the unpersisted byte are written in the FC
                 System.out.println("expectedNumByteInFileChannel: " + expectedNumByteInFileChannel);
             }
         }
