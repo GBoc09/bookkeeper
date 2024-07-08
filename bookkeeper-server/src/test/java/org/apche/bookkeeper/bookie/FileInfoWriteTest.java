@@ -9,6 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
@@ -31,7 +32,8 @@ public class FileInfoWriteTest {
     private enum FC_STATE{
         VALID, // can reach byte
         INVALID, // can't reach byte
-        ERROR // it returns -1 because there is an error in the writings
+        ERROR, // it returns -1 because there is an error in the writings
+        SHORT_WRITE
     }
 
     private long position;
@@ -56,10 +58,12 @@ public class FileInfoWriteTest {
         fileInfoWriteTuples.add(new FileInfoWriteTuple(FC_STATE.VALID, BUFF_STATE.EMPTY,0,false));
         fileInfoWriteTuples.add(new FileInfoWriteTuple(FC_STATE.VALID, BUFF_STATE.NOT_EMPTY, 0,false));
         fileInfoWriteTuples.add(new FileInfoWriteTuple(FC_STATE.VALID, BUFF_STATE.NOT_EMPTY, 1024, true));
+        fileInfoWriteTuples.add(new FileInfoWriteTuple(FC_STATE.VALID, BUFF_STATE.NOT_EMPTY, 1025, true));
         fileInfoWriteTuples.add(new FileInfoWriteTuple(FC_STATE.INVALID, BUFF_STATE.NOT_EMPTY,1024, true));
         //fileInfoWriteTuples.add(new FileInfoWriteTuple(FC_STATE.VALID, BUFF_STATE.EMPTY, -1, true));
-        fileInfoWriteTuples.add(new FileInfoWriteTuple(FC_STATE.VALID, BUFF_STATE.NOT_EMPTY, 1025, true));
-        fileInfoWriteTuples.add(new FileInfoWriteTuple(FC_STATE.ERROR, BUFF_STATE.NOT_EMPTY, 0, true));
+
+        fileInfoWriteTuples.add(new FileInfoWriteTuple(FC_STATE.SHORT_WRITE, BUFF_STATE.NOT_EMPTY,0,true));
+        fileInfoWriteTuples.add(new FileInfoWriteTuple(FC_STATE.ERROR, BUFF_STATE.NOT_EMPTY,0,true));
 
 
         return fileInfoWriteTuples;
@@ -106,12 +110,16 @@ public class FileInfoWriteTest {
                 case VALID:
                     this.fc = FileChannel.open(Paths.get("testDir/fileInfoWriteTest/file.log"), StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
                     this.fc.position(this.position); // we append data in sequence, we are trying to avoid overwrite the previous inputs.
-                    System.out.println("fc.size: " + this.fc.size());
+                    System.out.println("valid fc.size: " + this.fc.size());
                     break;
                 case INVALID:
                     FileChannel fc = FileChannel.open(Paths.get("testDir/fileInfoWriteTest/file.log"), StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
                     fc.close();
                     this.fc = fc;
+                    break;
+                case SHORT_WRITE:
+                    this.fc = mock(FileChannel.class);
+                    when(this.fc.write(any(ByteBuffer.class), anyLong())).thenReturn(0); // Simulate short write
                     break;
                 case ERROR:
                     this.fc = mock(FileChannel.class);
@@ -142,9 +150,9 @@ public class FileInfoWriteTest {
         long actualByteWritten;
         long expectedByteWritten;
         this.fileInfo = new FileInfo(file, masterkey.getBytes(), 0); // initialize a fileInfo for calling the method
-        fileInfo.write(new ByteBuffer[]{ByteBuffer.wrap(buff)}, this.position);
-        System.out.println(this.expectedException);
+        System.out.println("expectedException: "+this.expectedException);
         if (this.expectedException) {
+            fileInfo.write(new ByteBuffer[]{ByteBuffer.wrap(buff)}, this.position);
             Assert.assertTrue("expected exception", this.expectedException);
         } else {
             actualByteWritten = fileInfo.write(new ByteBuffer[]{ByteBuffer.wrap(this.buff)}, this.position);
@@ -155,8 +163,11 @@ public class FileInfoWriteTest {
                 expectedByteWritten = 0;
             }
             Assert.assertEquals(expectedByteWritten, actualByteWritten);
-            System.out.println("actual byte written: "+actualByteWritten);
+            System.out.println("actual byte written: "+actualByteWritten + "\n"+ "fc.read: "+this.fc.read(ByteBuffer.wrap(this.buff)));
 
         }
     }
 }
+
+
+
