@@ -74,14 +74,12 @@ public class BufferedChannelWriteTest {
     @Parameterized.Parameters
     public static Collection<WriteInputTuple> getWriteInputTuples() {
         List<WriteInputTuple> writeInputTupleList = new ArrayList<>();
-        //                                          (CAPACITY,   SRCSIZE,   FC_STATE,   SRC_STATE,          UNPERSISTEDBYTES,   EXCEPTION)
+        //(CAPACITY,   SRCSIZE,   FC_STATE,   SRC_STATE,          UNPERSISTEDBYTES,   EXCEPTION)
         writeInputTupleList.add(new WriteInputTuple(-1, 5, STATE.EMPTY, STATE.NOT_EMPTY, 0L, Exception.class));
-
 //        writeInputTupleList.add(new WriteInputTuple(0, 5, STATE.EMPTY, STATE.NOT_EMPTY, 0L, Exception.class)); // infinity loop --> there is a problem in the original method
         writeInputTupleList.add(new WriteInputTuple(10, 5, STATE.EMPTY, STATE.NOT_EMPTY, 0L, SUCCESS));
         writeInputTupleList.add(new WriteInputTuple(10, 10, STATE.EMPTY, STATE.NOT_EMPTY, 0L, SUCCESS));
         writeInputTupleList.add(new WriteInputTuple(10, 15, STATE.EMPTY, STATE.NOT_EMPTY, 0L, SUCCESS));
-
         writeInputTupleList.add(new WriteInputTuple(10, 0, STATE.EMPTY, STATE.EMPTY, 0L, SUCCESS));
         writeInputTupleList.add(new WriteInputTuple(0, 0, STATE.EMPTY, STATE.EMPTY, 0L, SUCCESS));
         writeInputTupleList.add(new WriteInputTuple(10, 0, STATE.EMPTY, STATE.NULL, 0L, Exception.class));

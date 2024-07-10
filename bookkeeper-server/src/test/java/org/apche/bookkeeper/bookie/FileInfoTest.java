@@ -70,10 +70,8 @@ public class FileInfoTest {
         fileInfoTuples.add(new FileInfoTuple(Long.MAX_VALUE, FILE_STATE.DELETE, EXPECTED_SIZE.ZERO, true)); // 4 ---> trying to verify the condition when the deletion fails BADUA improvement
 
         fileInfoTuples.add(new FileInfoTuple(0L, FILE_STATE.RENAME,EXPECTED_SIZE.ZERO, false)); // 5 ---> verifying what happens if we try to rename a file,
-
         fileInfoTuples.add(new FileInfoTuple(Long.MAX_VALUE, FILE_STATE.SAME, EXPECTED_SIZE.EXPECTED_SIZE, false)); // 6 ---> moving the newFile in the same file
         fileInfoTuples.add(new FileInfoTuple(Long.MAX_VALUE, FILE_STATE.FC_NULL, EXPECTED_SIZE.EXPECTED_SIZE, false)); // 7 ---> file channel of a newFile is null
-
 
 
         return fileInfoTuples;
@@ -124,31 +122,23 @@ public class FileInfoTest {
                 // for this test use mockito is nt so useful
                 case VALID:
                     this.newFile = createTempFile("testFileInfoNew");
-//                    this.newFile = mock(File.class);
-//                    when(this.newFile.createNewFile()).thenReturn(true);
+
                     break;
                 case CLOSE:
                     this.newFile = createTempFile("testFileInfoCloseFile");
                     this.newFile.delete();
-//                    this.newFile = mock(File.class);
-//                    when(this.newFile.createNewFile()).thenReturn(true);
-//                    when(this.newFile.exists()).thenReturn(false);
                     break;
                 case NULL:
                     this.newFile = null;
-//                    this.newFile = mock(File.class);
-//                    when(this.newFile.createNewFile()).thenReturn(false);
                     break;
                 case DELETE:
                     File testFile = mock(File.class);
                     when(testFile.delete()).thenReturn(false);
-                    //File temp = new File("testDir/fileInfoTest/temp.log");
                     File temp = createTempFile("temp");
                     when(testFile.getPath()).thenReturn(temp.getPath());
                     when(testFile.getParentFile()).thenReturn(temp.getParentFile());
                     when(testFile.exists()).thenReturn(true);
                     this.fileInfo = new FileInfo(testFile, masterkey.getBytes(), 0);
-                    //this.newFile = new File("testDir/fileInfoTest/newFile.log");
                     this.newFile = createTempFile("testInfoDeleteFail");
                     break;
                 case RENAME:
