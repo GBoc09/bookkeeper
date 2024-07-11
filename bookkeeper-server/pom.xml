@@ -26,6 +26,7 @@
   <name>Apache BookKeeper :: Server</name>
   <properties>
     <ba-dua.version>0.6.0</ba-dua.version>
+    <failsafe.version>3.2.2</failsafe.version>
   </properties>
   <dependencies>
     <dependency>
@@ -240,6 +241,11 @@
       <artifactId>awaitility</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>dev.failsafe</groupId>
+      <artifactId>failsafe</artifactId>
+      <version>${failsafe.version}</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -295,6 +301,23 @@
             </property>
           </properties>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
