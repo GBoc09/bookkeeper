@@ -30,11 +30,11 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Build Storm with Maven
+      - name: Build Bookkeeper with Maven
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify  -P Jacoco
+        run: mvn clean verify  -P Jacoco
       - name: Upload report
         uses: actions/upload-artifact@v3
         with:
