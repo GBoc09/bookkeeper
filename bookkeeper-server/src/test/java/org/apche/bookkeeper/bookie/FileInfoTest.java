@@ -196,7 +196,6 @@ public class FileInfoTest {
      * */
     @Test
     public void testFileInfo() throws IOException {
-        //if (file_state != FILE_STATE.DELETE && file_state != FILE_STATE.RENAME && file_state != FILE_STATE.FC_NULL && file_state != FILE_STATE.SAME && file_state != FILE_STATE.CLOSE){
           if(file_state == FILE_STATE.VALID || file_state == FILE_STATE.NULL||(file_state == FILE_STATE.CLOSE && expected_state == EXPECTED_SIZE.MIN_EXPECTED_SIZE)){
             this.fileInfo.moveToNewLocation(this.newFile, this.size);
             ByteBuffer buffer = ByteBuffer.allocate((int)this.expectedSize+10); // allocate a bigger arrays
