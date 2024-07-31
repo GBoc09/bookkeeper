@@ -76,7 +76,10 @@ public class BufferedChannelWriteTest {
         List<WriteInputTuple> writeInputTupleList = new ArrayList<>();
         //(CAPACITY,   SRCSIZE,   FC_STATE,   SRC_STATE,          UNPERSISTEDBYTES,   EXCEPTION)
         writeInputTupleList.add(new WriteInputTuple(-1, 5, STATE.EMPTY, STATE.NOT_EMPTY, 0L, Exception.class));
-//        writeInputTupleList.add(new WriteInputTuple(0, 5, STATE.EMPTY, STATE.NOT_EMPTY, 0L, Exception.class)); // infinity loop --> there is a problem in the original method
+
+        writeInputTupleList.add(new WriteInputTuple(0, 5, STATE.EMPTY, STATE.NOT_EMPTY, 0L, Exception.class)); // infinity loop --> there is a problem in the original method
+        //writeInputTupleList.add(new WriteInputTuple(0,5, STATE.EMPTY, STATE.NOT_EMPTY, 0L, SUCCESS)); // added to show the fail
+
         writeInputTupleList.add(new WriteInputTuple(10, 5, STATE.EMPTY, STATE.NOT_EMPTY, 0L, SUCCESS));
         writeInputTupleList.add(new WriteInputTuple(10, 10, STATE.EMPTY, STATE.NOT_EMPTY, 0L, SUCCESS));
         writeInputTupleList.add(new WriteInputTuple(10, 15, STATE.EMPTY, STATE.NOT_EMPTY, 0L, SUCCESS));
@@ -229,7 +232,7 @@ public class BufferedChannelWriteTest {
      * Usiamo gli assert per per verificare se i byte presenti nel buffer di scrittura e nel file channel corrispondono a
      * quelli attesi. Inoltre verifca se la posizione corrente del BufferdChannel è stata aggiornata correttamente  dopo
      * la scrittura dei dati. */
-    @Test
+    @Test (timeout = 5000)
     public void writeTest() throws IOException {
         System.out.println("Capacity: " + this.capacity);
         BufferedChannel bufferedChannel = new BufferedChannel(this.allocator, this.fileChannel, this.capacity, this.unpersistedBytes);

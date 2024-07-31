@@ -14,8 +14,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -94,7 +93,7 @@ public class FileInfoIndexPersistenceMgrIT {
 
             // Verifica che la posizione del file sia stata aggiornata
             assertNotEquals(initialFile.toPath(), newFile.toPath());
-            
+
         } catch (IOException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
             if (e instanceof InvocationTargetException) {
                 Throwable cause = ((InvocationTargetException) e).getCause();

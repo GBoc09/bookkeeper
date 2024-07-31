@@ -76,7 +76,7 @@ public class BufferedChannelReadTest {
     @Parameterized.Parameters
     public static Collection<ReadInputTuple> getReadInputTuples() {
         List<ReadInputTuple> readInputTupleList = new ArrayList<>();
-        //                                              {capacity    fc_state    dest_state           position       length  fileSize   writeBeforeRead          exception}
+        //  {capacity    fc_state    dest_state           position       length  fileSize   writeBeforeRead          exception}
         readInputTupleList.add(new ReadInputTuple(-1, FC_STATE.NOT_EMPTY, DEST_STATE.VALID, 0, 11, 12, false, Exception.class)); // how the method handles a negative value
         readInputTupleList.add(new ReadInputTuple(0, FC_STATE.NOT_EMPTY, DEST_STATE.VALID, 0, 11, 12, false, Exception.class)); // capacity 0
         //readInputTupleList.add(new ReadInputTuple(10, FC_STATE.NOT_EMPTY, DEST_STATE.VALID, 0, 11, 12, false, SUCCESS)); //read more bytes than available --> READ MORE BYTES disabled for building the project
@@ -95,7 +95,10 @@ public class BufferedChannelReadTest {
 
         readInputTupleList.add(new ReadInputTuple(10, FC_STATE.EMPTY, DEST_STATE.VALID, 0, 1, 0, true, Exception.class));
         readInputTupleList.add(new ReadInputTuple(10, FC_STATE.EMPTY, DEST_STATE.VALID,13, 11, 12, true, Exception.class));
+        readInputTupleList.add(new ReadInputTuple(10, FC_STATE.EMPTY, DEST_STATE.VALID,12, 11, 12, true, Exception.class));
+        readInputTupleList.add(new ReadInputTuple(10, FC_STATE.EMPTY, DEST_STATE.VALID,0, 13, 12, true, Exception.class));
         readInputTupleList.add(new ReadInputTuple(10, FC_STATE.EMPTY, DEST_STATE.VALID, 0, 0, 0, true, SUCCESS));
+        readInputTupleList.add(new ReadInputTuple(10, FC_STATE.EMPTY, DEST_STATE.VALID, 0, 12, 12, true, SUCCESS));
 
 
 
