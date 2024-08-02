@@ -319,7 +319,7 @@ public class LedgerDirsManager {
      * @return
      * @throws NoWritableLedgerDirException if there is no dir available.
      */
-    File pickRandomWritableDirForNewIndexFile(File excludedDir) throws NoWritableLedgerDirException {
+    public File pickRandomWritableDirForNewIndexFile(File excludedDir) throws NoWritableLedgerDirException {
         final List<File> writableDirsForNewIndexFile;
         if (!writableLedgerDirectories.isEmpty()) {
             writableDirsForNewIndexFile = writableLedgerDirectories;

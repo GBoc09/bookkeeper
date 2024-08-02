@@ -274,7 +274,7 @@ public class FileInfo extends Watchable<LastAddConfirmedUpdateNotification> {
     }
 
     @VisibleForTesting
-    void checkOpen(boolean create) throws IOException {
+    public void checkOpen(boolean create) throws IOException {
         checkOpen(create, false);
     }
 
