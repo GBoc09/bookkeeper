@@ -56,7 +56,9 @@ public  class FileInfoPersisteceMgrIT {
             headerBuffer.putInt(0); // Initial state bits, not fenced
             headerBuffer.rewind();
             raf.getChannel().write(headerBuffer);
+            raf.seek(1024);
             raf.write("test data".getBytes());
+            raf.getFD().sync();
         }
 
         fileChannel = new RandomAccessFile(initialFile, "rw").getChannel();
@@ -97,6 +99,9 @@ public  class FileInfoPersisteceMgrIT {
         fcField.set(fileInfo, fileChannel);
         assertTrue("FileChannel should be open", fileChannel.isOpen());
 
+        long sizeOfData = fileChannel.size() - 1024; // Calcola la dimensione del contenuto effettivo
+        System.out.println("Data size calculated: " + sizeOfData);
+
 //        spyFileInfo.checkOpen(false);
 
         // Create a new directory for moving the file
@@ -120,6 +125,34 @@ public  class FileInfoPersisteceMgrIT {
             newLedgerFile.delete();
         }
     }
+    @Test
+    public void testFileChannelAccessToInitialFile() throws Exception {
+        // Assicurati che il file esista e il canale sia aperto
+        assertTrue("The initial file should exist before the test.", initialFile.exists());
+        assertTrue("FileChannel should be open", fileChannel.isOpen());
+
+        // Buffer per leggere il contenuto
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+
+        // Leggi il contenuto del file usando il FileChannel
+        fileChannel.position(1024); // Inizia dalla posizione 1024
+        int bytesRead = fileChannel.read(buffer);
+
+        // Passa a modalità di lettura
+        buffer.flip();
+
+        // Leggi il contenuto in una stringa
+        byte[] data = new byte[bytesRead];
+        buffer.get(data);
+
+        // Converte i byte in una stringa e verifica
+        String content = new String(data);
+        System.out.println("expected data in initilFile: "+ content);
+        assertTrue("The file should contain the expected data", content.contains("test data"));
+
+        // Stampa il contenuto per verifica visiva
+        System.out.println("Content read from initialFile: " + content);
+    }
 
     @Test
     public void testMoveLedgerIndexFileInteraction() throws Exception {
@@ -131,12 +164,18 @@ public  class FileInfoPersisteceMgrIT {
         assertTrue("The initial file should exist before the test.", initialFile.exists());
         System.out.println("Initial File Path: " + initialFile.getAbsolutePath());
 
-        System.out.println("FileChannel should be open: "+ fileChannel.isOpen());
         assertTrue("FileChannel should be open", fileChannel.isOpen());
 //        System.out.println("size since last write: "+fileInfo.getSizeSinceLastWrite());
 
         System.out.println("New Ledger Directory Path: " + newLedgerFile.getAbsolutePath());
         System.out.println("New Ledger Directory Writable: " + newLedgerFile.canWrite());
+
+        long sizeSinceLastWrite = fileChannel.size() - 1024; // Dati dopo l'header
+        System.out.println("Size since last write (calculated): " + sizeSinceLastWrite);
+
+        // Assicurati che `sizeSinceLastWrite` non sia zero
+        assertTrue("Size since last write should not be zero", sizeSinceLastWrite > 0);
+
 
         // Invoke the private method using reflection
         moveMethod.invoke(indexPersistenceMgr, 1345L, fileInfo);
@@ -151,10 +190,10 @@ public  class FileInfoPersisteceMgrIT {
 //        assertEquals("The file should be moved to the new directory", newLedgerDir, capturedFile.getParentFile());
 
         // Verifica che il file sia stato spostato nella nuova directory
-
-        assertTrue("The file should have been moved to the new directory", newLedgerFile.exists());
+        assertTrue("The file should have been moved to the new  file", newLedgerFile.exists());
 
         try (RandomAccessFile raf = new RandomAccessFile(newLedgerFile, "r")) {
+            raf.seek(1024);
             byte[] buffer = new byte[9]; // "test data".length()
             raf.read(buffer);
             String content = new String(buffer);
@@ -181,5 +220,4 @@ public  class FileInfoPersisteceMgrIT {
         // Verify that moveToNewLocation was called with the correct size
         verify(spyFileInfo, times(1)).moveToNewLocation(any(File.class), eq(2048L));
     }
-
 }
