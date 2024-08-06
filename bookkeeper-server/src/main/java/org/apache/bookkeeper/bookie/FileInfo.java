@@ -503,6 +503,12 @@ public class FileInfo extends Watchable<LastAddConfirmedUpdateNotification> {
      */
     public synchronized void moveToNewLocation(File newFile, long size) throws IOException {
         checkOpen(false);
+        fc.position(1024); // Move to the position where actual data starts
+        ByteBuffer sourceBuffer = ByteBuffer.allocate(8);
+        fc.read(sourceBuffer);
+        sourceBuffer.flip();
+        String sourceContent = new String(sourceBuffer.array());
+        System.out.println("------------------------\nFILE INFO CLASS : \nContent to be copied: " + sourceContent);
         // If the channel is null, or same file path, just return.
         if (null == fc || isSameFile(newFile)) {
             return;
@@ -519,18 +525,28 @@ public class FileInfo extends Watchable<LastAddConfirmedUpdateNotification> {
         }
         // copy contents from old.idx to new.idx.rloc
         FileChannel newFc = new RandomAccessFile(rlocFile, "rw").getChannel();
+        System.out.println("newFc: "+ newFc.isOpen());
         try {
             long written = 0;
             while (written < size) {
                 long count = fc.transferTo(written, size, newFc);
+                System.out.println("count: "+count);
                 if (count <= 0) {
                     throw new IOException("Copying to new location " + rlocFile + " failed");
                 }
                 written += count;
+                System.out.println("written: "+written);
             }
             if (written <= 0 && size > 0) {
                 throw new IOException("Copying to new location " + rlocFile + " failed");
             }
+            // After writing, read back from newFc to verify content
+            newFc.position(1024); // Assuming header is skipped
+            ByteBuffer verifyBuffer = ByteBuffer.allocate(8); // Length of "test data"
+            newFc.read(verifyBuffer);
+            verifyBuffer.flip();
+            String content = new String(verifyBuffer.array());
+            System.out.println("Content in new file: " + content + "\n----------------------------");
         } finally {
             newFc.force(true);
             newFc.close();

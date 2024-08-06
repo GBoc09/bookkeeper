@@ -205,6 +205,7 @@ public class FileInfoTest {
             System.out.println("expectedSize: " + this.expectedSize+ " " + "byteRead: " + byteRead);
             Assert.assertEquals(byteRead, this.expectedSize);
             for (int i = 0; i< byteRead; i++){
+                System.out.println("string in fileInfoNew: "+ (char)buffer.array()[i]);
                 Assert.assertEquals(expectedString.charAt(i) + " " + buffer.array()[i], expectedString.charAt(i), (char) buffer.array()[i]);
             }
             if(this.expectedException){

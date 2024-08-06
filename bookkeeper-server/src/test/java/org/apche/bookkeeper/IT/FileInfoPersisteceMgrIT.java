@@ -41,6 +41,7 @@ public  class FileInfoPersisteceMgrIT {
 
     @Before
     public void setUp() throws Exception {
+        System.out.println("SET UP method:");
         // Create temporary directory and file
         Path tempDirectory = Files.createTempDirectory("ledgerDir");
         initialFile = Files.createTempFile(tempDirectory, "InitialFile", ".tmp").toFile();
@@ -57,23 +58,24 @@ public  class FileInfoPersisteceMgrIT {
             headerBuffer.rewind();
             raf.getChannel().write(headerBuffer);
             raf.seek(1024);
-            raf.write("test data".getBytes());
+            raf.write("testData".getBytes());
             raf.getFD().sync();
         }
 
         fileChannel = new RandomAccessFile(initialFile, "rw").getChannel();
-        try (RandomAccessFile raf = new RandomAccessFile(initialFile, "r")) {
-            // Sposta il puntatore all'inizio del contenuto dopo l'header
-            raf.seek(1024); // Assumendo che l'header sia di 1024 byte
+//        try (RandomAccessFile raf = new RandomAccessFile(initialFile, "r")) {
+//            // Sposta il puntatore all'inizio del contenuto dopo l'header
+//            raf.seek(1024); // Assumendo che l'header sia di 1024 byte
+//
+//            // Leggi i dati effettivi (per esempio, "test data")
+//            byte[] buffer = new byte[9]; // Lunghezza di "test data"
+//            raf.readFully(buffer);
+//
+//            // Converte i byte in una stringa e stampa
+//            String content = new String(buffer);
+//            System.out.println("initialFile content: " + content);
+//        }
 
-            // Leggi i dati effettivi (per esempio, "test data")
-            byte[] buffer = new byte[9]; // Lunghezza di "test data"
-            raf.readFully(buffer);
-
-            // Converte i byte in una stringa e stampa
-            String content = new String(buffer);
-            System.out.println("initialFile content: " + content);
-        }
         // Configure LedgerDirsManager mock
         ledgerDirsManager = mock(LedgerDirsManager.class);
 
@@ -93,21 +95,45 @@ public  class FileInfoPersisteceMgrIT {
 
         // Mock FileInfo with spy to track method interactions
         spyFileInfo = spy(fileInfo);
+
         // Set the FileChannel directly via reflection to ensure it is initialized
         Field fcField = FileInfo.class.getDeclaredField("fc");
         fcField.setAccessible(true);
         fcField.set(fileInfo, fileChannel);
         assertTrue("FileChannel should be open", fileChannel.isOpen());
 
-        long sizeOfData = fileChannel.size() - 1024; // Calcola la dimensione del contenuto effettivo
-        System.out.println("Data size calculated: " + sizeOfData);
+//        long sizeOfData = fileChannel.size() - 1024; // Calcola la dimensione del contenuto effettivo
+//        System.out.println("Data size calculated: " + sizeOfData);
+
+        // Posiziona il puntatore del canale dopo l'header
+        fileChannel.position(1024);
+        ByteBuffer dataBuffer = ByteBuffer.wrap("testData".getBytes());
+        fileChannel.write(dataBuffer);
+        // Sincronizza il canale per assicurarsi che i dati siano effettivamente scritti
+        fileChannel.force(true);
+        ByteBuffer verifyBuffer = ByteBuffer.allocate(8); // "test data".length()
+        fileChannel.position(1024); // Reimposta la posizione per la lettura
+        fileChannel.read(verifyBuffer);
+        verifyBuffer.flip();
+        String writtenContent = new String(verifyBuffer.array());
+        System.out.println("Data written to file: " + writtenContent);
+
+        Field sizeField = FileInfo.class.getDeclaredField("sizeSinceLastWrite");
+        sizeField.setAccessible(true);
+        sizeField.setLong(fileInfo, (fileChannel.size()-1024));
+
+        ByteBuffer buffer = ByteBuffer.allocate(1033);
+        fileInfo.read(buffer, 0, true);
+        for (int i = 0; i < 8; i++) {
+            System.out.println("string in fileInfo: "+ (char)buffer.array()[i]);
+        }
+
+        System.out.println("sincronized data: "+fileInfo.getSizeSinceLastWrite());
 
 //        spyFileInfo.checkOpen(false);
 
         // Create a new directory for moving the file
         newLedgerFile = Files.createTempFile(tempDirectory,"newLedgerDir", ".tmp").toFile();
-
-        newFileInfo = new FileInfo(fileInfo.getLf(), masterKey.getBytes(), 0);
 
         // Mock behavior for picking a writable directory
         when(ledgerDirsManager.pickRandomWritableDirForNewIndexFile(initialFile.getParentFile())).thenReturn(newLedgerFile);
@@ -124,6 +150,88 @@ public  class FileInfoPersisteceMgrIT {
         if (newLedgerFile != null && newLedgerFile.exists()) {
             newLedgerFile.delete();
         }
+    }
+
+
+    @Test
+    public void testMoveLedgerIndexFileInteraction() throws Exception {
+        System.out.println("--------------------------------------\n" +
+                "TEST testMoveLedgerIndexFileInteraction:");
+        // Use reflection to access the private moveLedgerIndexFile method
+        Method moveMethod = IndexPersistenceMgr.class.getDeclaredMethod("moveLedgerIndexFile", Long.class, FileInfo.class);
+        moveMethod.setAccessible(true);
+
+        // Ensure initial file exists
+        assertTrue("The initial file should exist before the test.", initialFile.exists());
+        System.out.println("Initial File Path: " + initialFile.getAbsolutePath());
+
+        assertTrue("FileChannel should be open", fileChannel.isOpen());
+
+        long sizeSinceLastWrite = fileChannel.size() - 1024; // Dati dopo l'header
+        System.out.println("Size since last write (calculated): " + sizeSinceLastWrite);
+
+        // Assicurati che `sizeSinceLastWrite` non sia zero
+        assertTrue("Size since last write should not be zero", sizeSinceLastWrite > 0);
+
+        System.out.println("get size since last write: "+fileInfo.getSizeSinceLastWrite());
+        ByteBuffer buff = ByteBuffer.allocate(1033);
+        fileInfo.read(buff, 0, true);
+        for (int i = 0; i < 8; i++) {
+            System.out.println("string in fileInfo: "+ (char)buff.array()[i]);
+        }
+        // Invoke the private method using reflection
+        moveMethod.invoke(indexPersistenceMgr, 1033L, fileInfo);
+
+        newLedgerFile = fileInfo.getLf();
+
+        newFileInfo = new FileInfo(fileInfo.getLf(), masterKey.getBytes(), 0);
+        System.out.println("fileInfo after moveToNewLocation: "+fileInfo.getLf() + " ********** newFileInfo: "+newFileInfo.getLf());
+        ByteBuffer buffer = ByteBuffer.allocate(1033);
+        int byteRead = newFileInfo.read(buffer, 0, true);
+        System.out.println("byte in newFileInfo: " + newFileInfo.size());
+
+        // Capture the file used in moveToNewLocation
+//        ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
+//        verify(fileInfo, times(1)).moveToNewLocation(fileCaptor.capture(), anyLong());
+
+        // Verify the captured file is in the new directory
+//        File capturedFile = fileCaptor.getValue();
+//        assertNotNull("The new file should not be null", capturedFile);
+//        assertEquals("The file should be moved to the new directory", newLedgerDir, capturedFile.getParentFile());
+
+        // Verifica che il file sia stato spostato nella nuova directory
+//        assertTrue("The file should have been moved to the new  file", newLedgerFile.exists());
+//
+
+        assertEquals(sizeSinceLastWrite, byteRead);
+
+        // Verifica il contenuto
+        buffer.flip();
+        byte[] data = new byte[byteRead];
+        buffer.get(data);
+        String content = new String(data);
+        assertEquals("testData", content.trim());
+
+
+        // Opzionalmente, controlla che il vecchio file sia stato eliminato
+        System.out.println("Does initial file exist: " + initialFile.exists());
+        assertFalse("The original file should not exist anymore", initialFile.exists());
+    }
+
+    @Test
+    public void testFileInfoSizeUpdate() throws Exception {
+        // Mock the size returned by FileInfo
+        doReturn(2048L).when(spyFileInfo).getSizeSinceLastWrite();
+
+        // Use reflection to invoke moveLedgerIndexFile
+        Method moveMethod = IndexPersistenceMgr.class.getDeclaredMethod("moveLedgerIndexFile", Long.class, FileInfo.class);
+        moveMethod.setAccessible(true);
+
+        // Invoke the method
+        moveMethod.invoke(indexPersistenceMgr, 1345L, spyFileInfo);
+
+        // Verify that moveToNewLocation was called with the correct size
+        verify(spyFileInfo, times(1)).moveToNewLocation(any(File.class), eq(2048L));
     }
     @Test
     public void testFileChannelAccessToInitialFile() throws Exception {
@@ -152,72 +260,5 @@ public  class FileInfoPersisteceMgrIT {
 
         // Stampa il contenuto per verifica visiva
         System.out.println("Content read from initialFile: " + content);
-    }
-
-    @Test
-    public void testMoveLedgerIndexFileInteraction() throws Exception {
-        // Use reflection to access the private moveLedgerIndexFile method
-        Method moveMethod = IndexPersistenceMgr.class.getDeclaredMethod("moveLedgerIndexFile", Long.class, FileInfo.class);
-        moveMethod.setAccessible(true);
-
-        // Ensure initial file exists
-        assertTrue("The initial file should exist before the test.", initialFile.exists());
-        System.out.println("Initial File Path: " + initialFile.getAbsolutePath());
-
-        assertTrue("FileChannel should be open", fileChannel.isOpen());
-//        System.out.println("size since last write: "+fileInfo.getSizeSinceLastWrite());
-
-        System.out.println("New Ledger Directory Path: " + newLedgerFile.getAbsolutePath());
-        System.out.println("New Ledger Directory Writable: " + newLedgerFile.canWrite());
-
-        long sizeSinceLastWrite = fileChannel.size() - 1024; // Dati dopo l'header
-        System.out.println("Size since last write (calculated): " + sizeSinceLastWrite);
-
-        // Assicurati che `sizeSinceLastWrite` non sia zero
-        assertTrue("Size since last write should not be zero", sizeSinceLastWrite > 0);
-
-
-        // Invoke the private method using reflection
-        moveMethod.invoke(indexPersistenceMgr, 1345L, fileInfo);
-
-        // Capture the file used in moveToNewLocation
-//        ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
-//        verify(fileInfo, times(1)).moveToNewLocation(fileCaptor.capture(), anyLong());
-
-        // Verify the captured file is in the new directory
-//        File capturedFile = fileCaptor.getValue();
-//        assertNotNull("The new file should not be null", capturedFile);
-//        assertEquals("The file should be moved to the new directory", newLedgerDir, capturedFile.getParentFile());
-
-        // Verifica che il file sia stato spostato nella nuova directory
-        assertTrue("The file should have been moved to the new  file", newLedgerFile.exists());
-
-        try (RandomAccessFile raf = new RandomAccessFile(newLedgerFile, "r")) {
-            raf.seek(1024);
-            byte[] buffer = new byte[9]; // "test data".length()
-            raf.read(buffer);
-            String content = new String(buffer);
-            assertEquals("test data", content);
-        }
-
-        // Opzionalmente, controlla che il vecchio file sia stato eliminato
-        System.out.println("Does initial file exist: " + initialFile.exists());
-        assertFalse("The original file should not exist anymore", initialFile.exists());
-    }
-
-    @Test
-    public void testFileInfoSizeUpdate() throws Exception {
-        // Mock the size returned by FileInfo
-        doReturn(2048L).when(spyFileInfo).getSizeSinceLastWrite();
-
-        // Use reflection to invoke moveLedgerIndexFile
-        Method moveMethod = IndexPersistenceMgr.class.getDeclaredMethod("moveLedgerIndexFile", Long.class, FileInfo.class);
-        moveMethod.setAccessible(true);
-
-        // Invoke the method
-        moveMethod.invoke(indexPersistenceMgr, 1345L, spyFileInfo);
-
-        // Verify that moveToNewLocation was called with the correct size
-        verify(spyFileInfo, times(1)).moveToNewLocation(any(File.class), eq(2048L));
     }
 }
