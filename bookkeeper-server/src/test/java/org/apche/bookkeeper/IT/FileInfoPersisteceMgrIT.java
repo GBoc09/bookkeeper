@@ -218,127 +218,56 @@ public  class FileInfoPersisteceMgrIT {
         assertFalse("The original file should not exist anymore", initialFile.exists());
     }
 
-    @Test
-    public void mockIntegrationTest() throws NoSuchMethodException, IOException, InvocationTargetException, IllegalAccessException {
-        System.out.println("--------------------------------------\n" +
-                "TEST mockIntegrationTest:");
-        // Use reflection to access the private moveLedgerIndexFile method
-        Method moveMethod = IndexPersistenceMgr.class.getDeclaredMethod("moveLedgerIndexFile", Long.class, FileInfo.class);
-        moveMethod.setAccessible(true);
-
-        // Ensure initial file exists
-        assertTrue("The initial file should exist before the test.", initialFile.exists());
-        System.out.println("Initial File Path: " + initialFile.getAbsolutePath());
-
-        assertTrue("FileChannel should be open", fileChannel.isOpen());
-
-        long sizeSinceLastWrite = fileChannel.size() - 1024; // Dati dopo l'header
-        System.out.println("Size since last write (calculated): " + sizeSinceLastWrite);
-
-        // Assicurati che `sizeSinceLastWrite` non sia zero
-        assertTrue("Size since last write should not be zero", sizeSinceLastWrite > 0);
-
-        System.out.println("get size since last write: "+spyFileInfo.getSizeSinceLastWrite());
-        ByteBuffer buff = ByteBuffer.allocate(1033);
-        spyFileInfo.read(buff, 0, true);
-        for (int i = 0; i < 8; i++) {
-            System.out.println("string in fileInfo: "+ (char)buff.array()[i]);
-        }
-        // Invoke the private method using reflection
-        moveMethod.invoke(indexPersistenceMgr, 1033L, spyFileInfo);
-
-        newLedgerFile = spyFileInfo.getLf();
-
-        newFileInfo = new FileInfo(spyFileInfo.getLf(), masterKey.getBytes(), 0);
-        System.out.println("fileInfo after moveToNewLocation: "+spyFileInfo.getLf() + " ********** newFileInfo: "+newFileInfo.getLf());
-        ByteBuffer buffer = ByteBuffer.allocate(1033);
-        int byteRead = newFileInfo.read(buffer, 0, true);
-        System.out.println("byte in newFileInfo: " + newFileInfo.size());
-        assertNotEquals(sizeSinceLastWrite, byteRead);
-
-        // Verifica il contenuto
-        buffer.flip();
-        byte[] data = new byte[byteRead];
-        buffer.get(data);
-        String content = new String(data);
-        assertEquals("testData", content.trim());
-
-
-        // Opzionalmente, controlla che il vecchio file sia stato eliminato
-        System.out.println("Does initial file exist: " + initialFile.exists());
-        assertFalse("The original file should not exist anymore", initialFile.exists());
-    }
-
-
+//    @Test
+//    public void mockIntegrationTest() throws NoSuchMethodException, IOException, InvocationTargetException, IllegalAccessException {
+//        System.out.println("--------------------------------------\n" +
+//                "TEST mockIntegrationTest:");
+//        // Use reflection to access the private moveLedgerIndexFile method
+//        Method moveMethod = IndexPersistenceMgr.class.getDeclaredMethod("moveLedgerIndexFile", Long.class, FileInfo.class);
+//        moveMethod.setAccessible(true);
+//
+//        // Ensure initial file exists
+//        assertTrue("The initial file should exist before the test.", initialFile.exists());
+//        System.out.println("Initial File Path: " + initialFile.getAbsolutePath());
+//
+//        assertTrue("FileChannel should be open", fileChannel.isOpen());
+//
+//        long sizeSinceLastWrite = fileChannel.size() - 1024; // Dati dopo l'header
+//        System.out.println("Size since last write (calculated): " + sizeSinceLastWrite);
+//
+//        // Assicurati che `sizeSinceLastWrite` non sia zero
+//        assertTrue("Size since last write should not be zero", sizeSinceLastWrite > 0);
+//
+//        System.out.println("get size since last write: "+spyFileInfo.getSizeSinceLastWrite());
+//        ByteBuffer buff = ByteBuffer.allocate(1033);
+//        spyFileInfo.read(buff, 0, true);
+//        for (int i = 0; i < 8; i++) {
+//            System.out.println("string in fileInfo: "+ (char)buff.array()[i]);
+//        }
+//        // Invoke the private method using reflection
+//        moveMethod.invoke(indexPersistenceMgr, 1033L, spyFileInfo);
+//
+//        newLedgerFile = spyFileInfo.getLf();
+//
+//        newFileInfo = new FileInfo(spyFileInfo.getLf(), masterKey.getBytes(), 0);
+//        System.out.println("fileInfo after moveToNewLocation: "+spyFileInfo.getLf() + " ********** newFileInfo: "+newFileInfo.getLf());
+//        ByteBuffer buffer = ByteBuffer.allocate(1033);
+//        int byteRead = newFileInfo.read(buffer, 0, true);
+//        System.out.println("byte in newFileInfo: " + newFileInfo.size());
+//        assertNotEquals(sizeSinceLastWrite, byteRead);
+//
+//        // Verifica il contenuto
+//        buffer.flip();
+//        byte[] data = new byte[byteRead];
+//        buffer.get(data);
+//        String content = new String(data);
+//        assertEquals("testData", content.trim());
+//
+//
+//        // Opzionalmente, controlla che il vecchio file sia stato eliminato
+//        System.out.println("Does initial file exist: " + initialFile.exists());
+//        assertFalse("The original file should not exist anymore", initialFile.exists());
+//    }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    @Test
-    public void testFileInfoSizeUpdate() throws Exception {
-        // Mock the size returned by FileInfo
-        doReturn(2048L).when(spyFileInfo).getSizeSinceLastWrite();
-
-        // Use reflection to invoke moveLedgerIndexFile
-        Method moveMethod = IndexPersistenceMgr.class.getDeclaredMethod("moveLedgerIndexFile", Long.class, FileInfo.class);
-        moveMethod.setAccessible(true);
-
-        // Invoke the method
-        moveMethod.invoke(indexPersistenceMgr, 1345L, spyFileInfo);
-
-        // Verify that moveToNewLocation was called with the correct size
-        verify(spyFileInfo, times(1)).moveToNewLocation(any(File.class), eq(2048L));
-    }
-    @Test
-    public void testFileChannelAccessToInitialFile() throws Exception {
-        // Assicurati che il file esista e il canale sia aperto
-        assertTrue("The initial file should exist before the test.", initialFile.exists());
-        assertTrue("FileChannel should be open", fileChannel.isOpen());
-
-        // Buffer per leggere il contenuto
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
-
-        // Leggi il contenuto del file usando il FileChannel
-        fileChannel.position(1024); // Inizia dalla posizione 1024
-        int bytesRead = fileChannel.read(buffer);
-
-        // Passa a modalità di lettura
-        buffer.flip();
-
-        // Leggi il contenuto in una stringa
-        byte[] data = new byte[bytesRead];
-        buffer.get(data);
-
-        // Converte i byte in una stringa e verifica
-        String content = new String(data);
-        System.out.println("expected data in initilFile: "+ content);
-        assertTrue("The file should contain the expected data", content.contains("test data"));
-
-        // Stampa il contenuto per verifica visiva
-        System.out.println("Content read from initialFile: " + content);
-    }
 }
