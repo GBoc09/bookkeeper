@@ -122,6 +122,7 @@ public class FileInfoTest {
                 // for this test use mockito is nt so useful
                 case VALID:
                     this.newFile = createTempFile("testFileInfoNew");
+                    System.out.println("New file name: "+this.newFile);
 
                     break;
                 case CLOSE:
