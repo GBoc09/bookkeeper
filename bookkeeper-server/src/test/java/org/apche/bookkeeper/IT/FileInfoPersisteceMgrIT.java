@@ -101,7 +101,7 @@ public  class FileInfoPersisteceMgrIT {
         Field fcField = FileInfo.class.getDeclaredField("fc");
         fcField.setAccessible(true);
         fcField.set(spyFileInfo, fileChannel);
-//        fcField.set(fileInfo, fileChannel);
+        //fcField.set(fileInfo, fileChannel);
         assertTrue("FileChannel should be open", fileChannel.isOpen());
 
 //        long sizeOfData = fileChannel.size() - 1024; // Calcola la dimensione del contenuto effettivo
@@ -112,7 +112,7 @@ public  class FileInfoPersisteceMgrIT {
         ByteBuffer byteBuffer[] = new ByteBuffer[1];
         byteBuffer[0] = ByteBuffer.wrap("testData".getBytes());
         spyFileInfo.write(byteBuffer, 0);
-//        fileInfo.write(byteBuffer, 0);
+        fileInfo.write(byteBuffer, 0);
         fileChannel.write(byteBuffer);
 
 
@@ -127,19 +127,14 @@ public  class FileInfoPersisteceMgrIT {
         String writtenContent = new String(verifyBuffer.array());
         System.out.println("Data written to file: " + writtenContent);
 
-        Field sizeField = FileInfo.class.getDeclaredField("sizeSinceLastWrite");
-        sizeField.setAccessible(true);
-        sizeField.set(spyFileInfo, (fileChannel.size()-1024));
-//        sizeField.setLong(fileInfo, (fileChannel.size()-1024));
-
         ByteBuffer buffer = ByteBuffer.allocate(1033);
         spyFileInfo.read(buffer, 0, true);
-//        fileInfo.read(buffer, 0, true);
+        fileInfo.read(buffer, 0, true);
         for (int i = 0; i < 8; i++) {
             System.out.println("string in fileInfo: "+ (char)buffer.array()[i]);
         }
 
-//        System.out.println("sincronized data: "+fileInfo.getSizeSinceLastWrite());
+        System.out.println("sincronized data: "+fileInfo.getSizeSinceLastWrite());
         System.out.println("sincronized data: "+ spyFileInfo.getSizeSinceLastWrite());
 
 //        spyFileInfo.checkOpen(false);
@@ -218,56 +213,56 @@ public  class FileInfoPersisteceMgrIT {
         assertFalse("The original file should not exist anymore", initialFile.exists());
     }
 
-//    @Test
-//    public void mockIntegrationTest() throws NoSuchMethodException, IOException, InvocationTargetException, IllegalAccessException {
-//        System.out.println("--------------------------------------\n" +
-//                "TEST mockIntegrationTest:");
-//        // Use reflection to access the private moveLedgerIndexFile method
-//        Method moveMethod = IndexPersistenceMgr.class.getDeclaredMethod("moveLedgerIndexFile", Long.class, FileInfo.class);
-//        moveMethod.setAccessible(true);
-//
-//        // Ensure initial file exists
-//        assertTrue("The initial file should exist before the test.", initialFile.exists());
-//        System.out.println("Initial File Path: " + initialFile.getAbsolutePath());
-//
-//        assertTrue("FileChannel should be open", fileChannel.isOpen());
-//
-//        long sizeSinceLastWrite = fileChannel.size() - 1024; // Dati dopo l'header
-//        System.out.println("Size since last write (calculated): " + sizeSinceLastWrite);
-//
-//        // Assicurati che `sizeSinceLastWrite` non sia zero
-//        assertTrue("Size since last write should not be zero", sizeSinceLastWrite > 0);
-//
-//        System.out.println("get size since last write: "+spyFileInfo.getSizeSinceLastWrite());
-//        ByteBuffer buff = ByteBuffer.allocate(1033);
-//        spyFileInfo.read(buff, 0, true);
-//        for (int i = 0; i < 8; i++) {
-//            System.out.println("string in fileInfo: "+ (char)buff.array()[i]);
-//        }
-//        // Invoke the private method using reflection
-//        moveMethod.invoke(indexPersistenceMgr, 1033L, spyFileInfo);
-//
-//        newLedgerFile = spyFileInfo.getLf();
-//
-//        newFileInfo = new FileInfo(spyFileInfo.getLf(), masterKey.getBytes(), 0);
-//        System.out.println("fileInfo after moveToNewLocation: "+spyFileInfo.getLf() + " ********** newFileInfo: "+newFileInfo.getLf());
-//        ByteBuffer buffer = ByteBuffer.allocate(1033);
-//        int byteRead = newFileInfo.read(buffer, 0, true);
-//        System.out.println("byte in newFileInfo: " + newFileInfo.size());
-//        assertNotEquals(sizeSinceLastWrite, byteRead);
-//
-//        // Verifica il contenuto
-//        buffer.flip();
-//        byte[] data = new byte[byteRead];
-//        buffer.get(data);
-//        String content = new String(data);
-//        assertEquals("testData", content.trim());
-//
-//
-//        // Opzionalmente, controlla che il vecchio file sia stato eliminato
-//        System.out.println("Does initial file exist: " + initialFile.exists());
-//        assertFalse("The original file should not exist anymore", initialFile.exists());
-//    }
+    @Test
+    public void mockIntegrationTest() throws NoSuchMethodException, IOException, InvocationTargetException, IllegalAccessException {
+        System.out.println("--------------------------------------\n" +
+                "TEST mockIntegrationTest:");
+        // Use reflection to access the private moveLedgerIndexFile method
+        Method moveMethod = IndexPersistenceMgr.class.getDeclaredMethod("moveLedgerIndexFile", Long.class, FileInfo.class);
+        moveMethod.setAccessible(true);
+
+        // Ensure initial file exists
+        assertTrue("The initial file should exist before the test.", initialFile.exists());
+        System.out.println("Initial File Path: " + initialFile.getAbsolutePath());
+
+        assertTrue("FileChannel should be open", fileChannel.isOpen());
+
+        long sizeSinceLastWrite = fileChannel.size() - 1024; // Dati dopo l'header
+        System.out.println("Size since last write (calculated): " + sizeSinceLastWrite);
+
+        // Assicurati che `sizeSinceLastWrite` non sia zero
+        assertTrue("Size since last write should not be zero", sizeSinceLastWrite > 0);
+
+        System.out.println("get size since last write: "+spyFileInfo.getSizeSinceLastWrite());
+        ByteBuffer buff = ByteBuffer.allocate(1033);
+        spyFileInfo.read(buff, 0, true);
+        for (int i = 0; i < 8; i++) {
+            System.out.println("string in fileInfo: "+ (char)buff.array()[i]);
+        }
+        // Invoke the private method using reflection
+        moveMethod.invoke(indexPersistenceMgr, 1033L, spyFileInfo);
+
+        newLedgerFile = spyFileInfo.getLf();
+
+        newFileInfo = new FileInfo(spyFileInfo.getLf(), masterKey.getBytes(), 0);
+        System.out.println("fileInfo after moveToNewLocation: "+spyFileInfo.getLf() + " ********** newFileInfo: "+newFileInfo.getLf());
+        ByteBuffer buffer = ByteBuffer.allocate(1033);
+        int byteRead = spyFileInfo.read(buffer, 0, true);
+        System.out.println("byte in newFileInfo: " + spyFileInfo.size());
+        assertEquals(sizeSinceLastWrite, byteRead);
+
+        // Verifica il contenuto
+        buffer.flip();
+        byte[] data = new byte[byteRead];
+        buffer.get(data);
+        String content = new String(data);
+        System.out.println("newFile content: " + content);
+        assertEquals("testData", content.trim());
+        
+        // Opzionalmente, controlla che il vecchio file sia stato eliminato
+        System.out.println("Does initial file exist: " + initialFile.exists());
+        assertFalse("The original file should not exist anymore", initialFile.exists());
+    }
 
 
 }
