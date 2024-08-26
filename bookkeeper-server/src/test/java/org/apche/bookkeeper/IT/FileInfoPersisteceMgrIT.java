@@ -8,8 +8,10 @@ import org.apache.bookkeeper.util.IOUtils;
 import org.apache.bookkeeper.util.SnapshotMap;
 import org.apache.bookkeeper.stats.StatsLogger;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentCaptor;
 
 import java.io.File;
@@ -38,13 +40,14 @@ public  class FileInfoPersisteceMgrIT {
     private ServerConfiguration serverConfiguration = new ServerConfiguration();
     private FileChannel fileChannel;
     private String masterKey = "masterKey";
+    private Path tempDirectory;
 
 
     @Before
     public void setUp() throws Exception {
         System.out.println("SET UP method:");
         // Create temporary directory and file
-        Path tempDirectory = Files.createTempDirectory("ledgerDir");
+        tempDirectory = Files.createTempDirectory("ledgerDir");
         initialFile = Files.createTempFile(tempDirectory, "InitialFile", ".tmp").toFile();
 
         // Write a valid header to the file
@@ -197,7 +200,6 @@ public  class FileInfoPersisteceMgrIT {
         int byteRead = newFileInfo.read(buffer, 0, true);
         System.out.println("byte in newFileInfo: " + newFileInfo.size());
 
-
         assertEquals(sizeSinceLastWrite, byteRead);
 
         // Verifica il contenuto
@@ -207,12 +209,28 @@ public  class FileInfoPersisteceMgrIT {
         String content = new String(data);
         assertEquals("testData", content.trim());
 
-
         // Opzionalmente, controlla che il vecchio file sia stato eliminato
         System.out.println("Does initial file exist: " + initialFile.exists());
         assertFalse("The original file should not exist anymore", initialFile.exists());
     }
+    @Test
+    public void relocateIndexAndFlushHeaderTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException {
+        // creiamo una nuova dir
+        File currentDir = new File("/mock/full/dir");
+        // imponiamo che il risultato della chiamata a isDirFull sia true
+        when(ledgerDirsManager.isDirFull(currentDir)).thenReturn(true);
+        Method moveLedgerIndexMethod = IndexPersistenceMgr.class.getDeclaredMethod("moveLedgerIndexFile", Long.class, FileInfo.class);
+        moveLedgerIndexMethod.setAccessible(true);
 
+        moveLedgerIndexMethod.invoke(indexPersistenceMgr, 1033L, spyFileInfo);
+
+        Method flushHeaderMethod = FileInfo.class.getDeclaredMethod("flushHeader");
+        flushHeaderMethod.setAccessible(true);
+        flushHeaderMethod.invoke(spyFileInfo);
+
+        verify(spyFileInfo, times(1)).flushHeader();
+
+    }
     @Test
     public void mockIntegrationTest() throws NoSuchMethodException, IOException, InvocationTargetException, IllegalAccessException {
         System.out.println("--------------------------------------\n" +
@@ -258,7 +276,7 @@ public  class FileInfoPersisteceMgrIT {
         String content = new String(data);
         System.out.println("newFile content: " + content);
         assertEquals("testData", content.trim());
-        
+
         // Opzionalmente, controlla che il vecchio file sia stato eliminato
         System.out.println("Does initial file exist: " + initialFile.exists());
         assertFalse("The original file should not exist anymore", initialFile.exists());

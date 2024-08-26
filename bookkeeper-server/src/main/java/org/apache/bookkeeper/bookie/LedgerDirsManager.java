@@ -333,7 +333,7 @@ public class LedgerDirsManager {
         return pickRandomDir(writableDirsForNewIndexFile, excludedDir);
     }
 
-    boolean isDirWritableForNewIndexFile(File indexDir) {
+    public boolean isDirWritableForNewIndexFile(File indexDir) {
         return (ledgerDirectories.contains(indexDir)
                 && (indexDir.getUsableSpace() > minUsableSizeForIndexFileCreation));
     }
