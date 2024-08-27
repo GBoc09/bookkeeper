@@ -144,6 +144,8 @@ public class FileInfoPersistanceRelocationIT {
         Method relecateIndexMethod = IndexPersistenceMgr.class.getDeclaredMethod("relocateIndexFileAndFlushHeader", long.class, FileInfo.class);
         relecateIndexMethod.setAccessible(true);
         relecateIndexMethod.invoke(indexPersistenceMgr, 1024L, spyFileInfo);
+
+        verify(spyFileInfo, times(1)).moveToNewLocation(any(File.class), anyLong());
         verify(spyFileInfo, times(1)).flushHeader();
     }
 }
