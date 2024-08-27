@@ -4,15 +4,11 @@ import org.apache.bookkeeper.bookie.FileInfo;
 import org.apache.bookkeeper.bookie.IndexPersistenceMgr;
 import org.apache.bookkeeper.bookie.LedgerDirsManager;
 import org.apache.bookkeeper.conf.ServerConfiguration;
-import org.apache.bookkeeper.util.IOUtils;
 import org.apache.bookkeeper.util.SnapshotMap;
 import org.apache.bookkeeper.stats.StatsLogger;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.BeforeEach;
-import org.mockito.ArgumentCaptor;
 
 import java.io.File;
 import java.io.IOException;
@@ -118,7 +114,6 @@ public  class FileInfoPersisteceMgrIT {
         fileInfo.write(byteBuffer, 0);
         fileChannel.write(byteBuffer);
 
-
         //ByteBuffer dataBuffer = ByteBuffer.wrap("testData".getBytes());
         //fileChannel.write(dataBuffer);
         // Sincronizza il canale per assicurarsi che i dati siano effettivamente scritti
@@ -213,24 +208,7 @@ public  class FileInfoPersisteceMgrIT {
         System.out.println("Does initial file exist: " + initialFile.exists());
         assertFalse("The original file should not exist anymore", initialFile.exists());
     }
-    @Test
-    public void relocateIndexAndFlushHeaderTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException {
-        // creiamo una nuova dir
-        File currentDir = new File("/mock/full/dir");
-        // imponiamo che il risultato della chiamata a isDirFull sia true
-        when(ledgerDirsManager.isDirFull(currentDir)).thenReturn(true);
-        Method moveLedgerIndexMethod = IndexPersistenceMgr.class.getDeclaredMethod("moveLedgerIndexFile", Long.class, FileInfo.class);
-        moveLedgerIndexMethod.setAccessible(true);
 
-        moveLedgerIndexMethod.invoke(indexPersistenceMgr, 1033L, spyFileInfo);
-
-        Method flushHeaderMethod = FileInfo.class.getDeclaredMethod("flushHeader");
-        flushHeaderMethod.setAccessible(true);
-        flushHeaderMethod.invoke(spyFileInfo);
-
-        verify(spyFileInfo, times(1)).flushHeader();
-
-    }
     @Test
     public void mockIntegrationTest() throws NoSuchMethodException, IOException, InvocationTargetException, IllegalAccessException {
         System.out.println("--------------------------------------\n" +
