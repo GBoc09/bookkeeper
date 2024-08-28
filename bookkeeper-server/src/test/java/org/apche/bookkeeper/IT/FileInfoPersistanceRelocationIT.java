@@ -50,15 +50,15 @@ public class FileInfoPersistanceRelocationIT {
         Path baseDirectory = Files.createTempDirectory("ledgerBaseDir");
         Path subDirectory = Files.createDirectories(baseDirectory.resolve("subDir"));
         Path furtherSubDirectory = Files.createDirectories(subDirectory.resolve("furtherSubDir"));
-        Path tempFile = Files.createTempFile(furtherSubDirectory, "MockFile", ".tmp");
+        Path tempFile = Files.createTempFile(baseDirectory, "MockFile", ".tmp");
 
         currentFile = tempFile.toFile();
         System.out.println("currentFile: " + currentFile);
-        accessDir = currentFile.getParentFile().getParentFile().getParentFile();
+        accessDir = currentFile.getParentFile();
         System.out.println("accessDir: " + accessDir.getAbsolutePath());
-        tempDirectory = Files.createTempFile(baseDirectory, "MockFile", ".tmp");
-        accessFile = tempDirectory.toFile();
-        System.out.println("accessFile: " + accessFile.getAbsolutePath());
+//        tempDirectory = Files.createTempFile(baseDirectory, "MockFile", ".tmp");
+//        accessFile = tempDirectory.toFile();
+//        System.out.println("accessFile: " + accessFile.getAbsolutePath());
         // Write a valid header to the file
         try (RandomAccessFile raf = new RandomAccessFile(currentFile, "rw")) {
             ByteBuffer headerBuffer = ByteBuffer.allocate(1024);
