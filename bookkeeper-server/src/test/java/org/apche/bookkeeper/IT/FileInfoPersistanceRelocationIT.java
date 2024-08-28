@@ -27,17 +27,15 @@ import static org.mockito.Mockito.*;
 public class FileInfoPersistanceRelocationIT {
     private IndexPersistenceMgr indexPersistenceMgr;
     private FileInfo fileInfo;
-    private FileInfo newFileInfo;
     private FileInfo spyFileInfo;
     private File currentFile;
-    private File newLedgerFile;
     private LedgerDirsManager ledgerDirsManager;
     private ServerConfiguration serverConfiguration = new ServerConfiguration();
     private FileChannel fileChannel;
     private String masterKey = "masterKey";
-    private Path tempDirectory;
     private File accessDir;
-    private File accessFile;
+    private File realFile;
+    private File newLedgerFile;
 
 
     @Before
@@ -50,11 +48,15 @@ public class FileInfoPersistanceRelocationIT {
         Path baseDirectory = Files.createTempDirectory("ledgerBaseDir");
         Path subDirectory = Files.createDirectories(baseDirectory.resolve("subDir"));
         Path furtherSubDirectory = Files.createDirectories(subDirectory.resolve("furtherSubDir"));
-        Path tempFile = Files.createTempFile(baseDirectory, "MockFile", ".tmp");
+        Path tempFile = Files.createTempFile(furtherSubDirectory, "MockFile", ".tmp");
+        Path tempFile1 = Files.createTempFile(baseDirectory, "MockFile1", ".tmp");
 
         currentFile = tempFile.toFile();
-        System.out.println("currentFile: " + currentFile);
+        realFile = tempFile1.toFile();
+        System.out.println("currentFile: " + currentFile + " realFile: " + realFile);
         accessDir = currentFile.getParentFile();
+        System.out.println("accessDir: " + accessDir.getAbsolutePath());
+        accessDir = realFile.getParentFile();
         System.out.println("accessDir: " + accessDir.getAbsolutePath());
 //        tempDirectory = Files.createTempFile(baseDirectory, "MockFile", ".tmp");
 //        accessFile = tempDirectory.toFile();
@@ -85,13 +87,14 @@ public class FileInfoPersistanceRelocationIT {
                 ledgerDirsManager,
                 mock(StatsLogger.class)
         );
-        System.out.println("indexPersistenceMgr instance: " + indexPersistenceMgr);
 
         // real FileInfo object
         fileInfo = new FileInfo(currentFile, masterKey.getBytes(), 0);
+        System.out.println("fileInfo instance: " + fileInfo.getLf());
 
         // Mock FileInfo with spy to track method interactions
         spyFileInfo = spy(fileInfo);
+        System.out.println("spyFileInfo instance: " + spyFileInfo.getLf());
 
         // Set the FileChannel directly via reflection to ensure it is initialized
         Field fcField = FileInfo.class.getDeclaredField("fc");
@@ -143,9 +146,19 @@ public class FileInfoPersistanceRelocationIT {
         when(ledgerDirsManager.isDirFull(accessDir)).thenReturn(true);
         Method relecateIndexMethod = IndexPersistenceMgr.class.getDeclaredMethod("relocateIndexFileAndFlushHeader", long.class, FileInfo.class);
         relecateIndexMethod.setAccessible(true);
-        relecateIndexMethod.invoke(indexPersistenceMgr, 1024L, spyFileInfo);
+        System.out.println("spyFileInfo size since last write: "+spyFileInfo.getSizeSinceLastWrite() + "\nspyFileInfo before moveToNewLocation: "+ spyFileInfo.getLf());
+
+        relecateIndexMethod.invoke(indexPersistenceMgr, 1033L, spyFileInfo);
 
         verify(spyFileInfo, times(1)).moveToNewLocation(any(File.class), anyLong());
         verify(spyFileInfo, times(1)).flushHeader();
+
+        newLedgerFile = spyFileInfo.getLf();
+        System.out.println("newLedgerFile path: "+newLedgerFile.getAbsolutePath());
+        FileInfo newFileInfo = new FileInfo(spyFileInfo.getLf(), masterKey.getBytes(), 0);
+        System.out.println("fileInfo after moveToNewLocation: "+spyFileInfo.getLf() + " ********** newFileInfo: "+newFileInfo.getLf());
+        ByteBuffer buffer = ByteBuffer.allocate(1033);
+        int byteRead = spyFileInfo.read(buffer, 0, true);
+        System.out.println("byte in newFileInfo: " + spyFileInfo.size());
     }
 }

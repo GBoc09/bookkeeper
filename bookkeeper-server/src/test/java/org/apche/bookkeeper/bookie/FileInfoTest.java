@@ -191,10 +191,7 @@ public class FileInfoTest {
      * RENAME:
      * il test sposta il file in una nuova posizione specificata dalla variabile newFile. In questo caso si assicura che
      * non venga generata alcuna eccezione.
-     *
-     * FC_NULL or SAME:
-     * il test verifica se il file è stato eliminato.
-     * */
+    */
     @Test
     public void testFileInfo() throws IOException {
           if(file_state == FILE_STATE.VALID || file_state == FILE_STATE.NULL||(file_state == FILE_STATE.CLOSE && expected_state == EXPECTED_SIZE.MIN_EXPECTED_SIZE)){
